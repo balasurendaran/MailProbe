@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Validator API — Tester</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --border-bright: #2a2a3e;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --accent: #7c6af7;
+    --accent-glow: rgba(124, 106, 247, 0.15);
+    --green: #22d87a;
+    --green-glow: rgba(34, 216, 122, 0.12);
+    --red: #f75a5a;
+    --red-glow: rgba(247, 90, 90, 0.12);
+    --yellow: #f7c948;
+    --yellow-glow: rgba(247, 201, 72, 0.12);
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124, 106, 247, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124, 106, 247, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    margin-bottom: 48px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(124, 106, 247, 0.3);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.6;
+    max-width: 560px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 32px;
+    width: fit-content;
+  }
+
+  .tab {
+    padding: 8px 20px;
+    border-radius: 7px;
+    border: none;
+    background: none;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .tab:not(.active):hover { color: var(--text); }
+
+  /* Panel */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Input group */
+  .input-group {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+
+  .input-group:focus-within { border-color: var(--accent); }
+
+  .input-label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  input[type="text"], textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    width: 100%;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.7;
+  }
+
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+
+  /* Options row */
+  .options-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+  }
+
+  /* Submit button */
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: 9px;
+    border: none;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    width: 100%;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #9080ff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(124, 106, 247, 0.3);
+  }
+
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Results */
+  .result-area { margin-top: 24px; }
+
+  .result-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .status-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .status-icon.valid { background: var(--green-glow); }
+  .status-icon.invalid { background: var(--red-glow); }
+  .status-icon.inconclusive { background: var(--yellow-glow); }
+
+  .result-email {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .score-badge {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+
+  .score-badge.high { background: var(--green-glow); color: var(--green); }
+  .score-badge.mid { background: var(--yellow-glow); color: var(--yellow); }
+  .score-badge.low { background: var(--red-glow); color: var(--red); }
+
+  /* Checks grid */
+  .checks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .check-item {
+    background: var(--surface);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .check-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .check-dot.pass { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .check-dot.fail { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .check-dot.skip { background: var(--muted); }
+  .check-dot.warn { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+
+  .check-name {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+  }
+
+  /* Details */
+  .result-details {
+    padding: 16px 20px;
+  }
+
+  .reason-text {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+
+  .mx-records {
+    margin-bottom: 14px;
+  }
+
+  .mx-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .mx-record {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: var(--bg);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    margin-bottom: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .mx-priority { color: var(--accent); font-weight: 600; }
+
+  /* SMTP steps toggle */
+  .smtp-toggle {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .smtp-steps {
+    margin-top: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: none;
+  }
+
+  .smtp-steps.open { display: block; }
+
+  .smtp-step {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.8;
+    color: var(--muted);
+  }
+
+  .smtp-step.send { color: var(--accent); }
+  .smtp-step.recv { color: var(--text); }
+
+  /* Raw JSON */
+  .json-toggle {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s;
+  }
+  .json-toggle:hover { color: var(--text); }
+
+  .json-block {
+    margin-top: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--muted);
+    overflow-x: auto;
+    display: none;
+    white-space: pre;
+  }
+
+  .json-block.open { display: block; }
+
+  /* Batch results */
+  .batch-summary {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .summary-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    text-align: center;
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .stat-num.valid-num { color: var(--green); }
+  .stat-num.invalid-num { color: var(--red); }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Code block */
+  .code-section {
+    margin-top: 40px;
+  }
+
+  .code-section h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .code-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .code-tab {
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .code-tab.active, .code-tab:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    color: #c9c9d9;
+    overflow-x: auto;
+    display: none;
+    position: relative;
+  }
+
+  .code-block.active { display: block; }
+
+  .copy-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 4px 10px;
+    background: var(--border);
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover { color: var(--text); background: var(--border-bright); }
+
+  .kw { color: var(--accent); }
+  .str { color: var(--green); }
+  .cm { color: #555570; }
+  .fn { color: #f7c948; }
+  .num { color: #f79a48; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="badge"><span class="badge-dot"></span> Live API Tester</div>
+    <h1>Email <span>Validator</span> API</h1>
+    <p class="subtitle">Verify email addresses without sending messages — checks syntax, MX records, and SMTP handshake in real time.</p>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('single')">Single Email</button>
+    <button class="tab" onclick="switchTab('batch')">Batch (up to 10)</button>
+  </div>
+
+  <!-- Single Panel -->
+  <div class="panel active" id="panel-single">
+    <div class="input-group">
+      <label class="input-label">Email Address</label>
+      <div class="input-row">
+        <input type="text" id="emailInput" placeholder="user@example.com" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="options-row">
+      <label class="checkbox-label">
+        <input type="checkbox" id="skipSmtp">
+        Skip SMTP check (MX only — faster)
+      </label>
+    </div>
+    <button class="btn btn-primary" id="validateBtn" onclick="validateSingle()">
+      <div class="spinner" id="singleSpinner"></div>
+      <span id="validateBtnText">Validate Email</span>
+    </button>
+    <div class="result-area" id="singleResult"></div>
+  </div>
+
+  <!-- Batch Panel -->
+  <div class="panel" id="panel-batch">
+    <div class="input-group">
+      <label class="input-label">Email Addresses (one per line)</label>
+      <textarea id="batchInput" placeholder="alice@example.com&#10;bob@gmail.com&#10;invalid@nonexistentdomain123.xyz"></textarea>
+    </div>
+    <div class="options-row">
+      <label class="checkbox-label">
+        <input type="checkbox" id="skipSmtpBatch">
+        Skip SMTP check (MX only — faster)
+      </label>
+    </div>
+    <button class="btn btn-primary" id="batchBtn" onclick="validateBatch()">
+      <div class="spinner" id="batchSpinner"></div>
+      <span id="batchBtnText">Validate All</span>
+    </button>
+    <div class="result-area" id="batchResult"></div>
+  </div>
+
+  <!-- Code Examples -->
+  <div class="code-section">
+    <h2>📎 Integration Examples</h2>
+    <div class="code-tabs">
+      <button class="code-tab active" onclick="switchCode('fetch')">fetch (JS)</button>
+      <button class="code-tab" onclick="switchCode('axios')">axios</button>
+      <button class="code-tab" onclick="switchCode('python')">Python</button>
+      <button class="code-tab" onclick="switchCode('curl')">cURL</button>
+    </div>
+
+    <div class="code-block active" id="code-fetch">
+      <button class="copy-btn" onclick="copyCode('fetch')">Copy</button>
+<span class="cm">// Single email validation</span>
+<span class="kw">const</span> <span class="fn">validateEmail</span> = <span class="kw">async</span> (email) => {
+  <span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">'http://localhost:3000/api/validate'</span>, {
+    method: <span class="str">'POST'</span>,
+    headers: {
+      <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>,
+      <span class="str">'X-API-Key'</span>: <span class="str">'your_api_key'</span>  <span class="cm">// if auth enabled</span>
+    },
+    body: JSON.stringify({ email, skip_smtp: <span class="kw">false</span> })
+  });
+  <span class="kw">const</span> data = <span class="kw">await</span> res.json();
+  <span class="kw">return</span> data;
+};
+
+<span class="cm">// Usage in a form</span>
+<span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">validateEmail</span>(<span class="str">'user@example.com'</span>);
+<span class="kw">if</span> (!result.data.valid) {
+  showError(<span class="str">'Please enter a valid email address'</span>);
+}</div>
+
+    <div class="code-block" id="code-axios">
+      <button class="copy-btn" onclick="copyCode('axios')">Copy</button>
+<span class="kw">import</span> axios <span class="kw">from</span> <span class="str">'axios'</span>;
+
+<span class="kw">const</span> client = axios.create({
+  baseURL: <span class="str">'http://localhost:3000/api'</span>,
+  headers: { <span class="str">'X-API-Key'</span>: <span class="str">'your_api_key'</span> }
+});
+
+<span class="cm">// Single validation</span>
+<span class="kw">const</span> { data } = <span class="kw">await</span> client.post(<span class="str">'/validate'</span>, {
+  email: <span class="str">'user@example.com'</span>
+});
+
+<span class="cm">// Batch validation</span>
+<span class="kw">const</span> { data: batch } = <span class="kw">await</span> client.post(<span class="str">'/validate/batch'</span>, {
+  emails: [<span class="str">'a@x.com'</span>, <span class="str">'b@y.com'</span>],
+  skip_smtp: <span class="kw">true</span>
+});
+console.log(<span class="str">`Valid: </span>${batch.data.valid}<span class="str"> / </span>${batch.data.total}<span class="str">`</span>);</div>
+
+    <div class="code-block" id="code-python">
+      <button class="copy-btn" onclick="copyCode('python')">Copy</button>
+<span class="kw">import</span> requests
+
+API_URL = <span class="str">"http://localhost:3000/api"</span>
+HEADERS = {<span class="str">"X-API-Key"</span>: <span class="str">"your_api_key"</span>}
+
+<span class="cm"># Single email</span>
+<span class="kw">def</span> <span class="fn">validate_email</span>(email: str, skip_smtp: bool = <span class="kw">False</span>):
+    resp = requests.post(
+        f<span class="str">"{API_URL}/validate"</span>,
+        json={<span class="str">"email"</span>: email, <span class="str">"skip_smtp"</span>: skip_smtp},
+        headers=HEADERS
+    )
+    <span class="kw">return</span> resp.json()
+
+<span class="cm"># Batch emails</span>
+<span class="kw">def</span> <span class="fn">validate_batch</span>(emails: list):
+    resp = requests.post(
+        f<span class="str">"{API_URL}/validate/batch"</span>,
+        json={<span class="str">"emails"</span>: emails},
+        headers=HEADERS
+    )
+    <span class="kw">return</span> resp.json()
+
+result = <span class="fn">validate_email</span>(<span class="str">"user@example.com"</span>)
+print(result[<span class="str">"data"</span>][<span class="str">"valid"</span>], result[<span class="str">"data"</span>][<span class="str">"reason"</span>])</div>
+
+    <div class="code-block" id="code-curl">
+      <button class="copy-btn" onclick="copyCode('curl')">Copy</button>
+<span class="cm"># Single email validation</span>
+curl -X POST http://localhost:<span class="num">3000</span>/api/validate \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -H <span class="str">"X-API-Key: your_api_key"</span> \
+  -d <span class="str">'{"email": "user@example.com"}'</span>
+
+<span class="cm"># Skip SMTP (MX check only)</span>
+curl -X POST http://localhost:<span class="num">3000</span>/api/validate \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"email": "user@example.com", "skip_smtp": true}'</span>
+
+<span class="cm"># Batch validation</span>
+curl -X POST http://localhost:<span class="num">3000</span>/api/validate/batch \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"emails": ["a@x.com", "b@y.com", "bad@fake.xyz"]}'</span></div>
+  </div>
+
+</div>
+
+<script>
+  const API_BASE = window.location.origin + '/api';
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', ['single','batch'][i] === tab);
+    });
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+  }
+
+  function switchCode(lang) {
+    document.querySelectorAll('.code-tab').forEach(t => {
+      t.classList.toggle('active', t.textContent.toLowerCase().includes(lang) ||
+        (lang === 'fetch' && t.textContent.includes('fetch')));
+    });
+    document.querySelectorAll('.code-block').forEach(b => b.classList.remove('active'));
+    document.getElementById('code-' + lang).classList.add('active');
+  }
+
+  function copyCode(lang) {
+    const el = document.getElementById('code-' + lang);
+    navigator.clipboard.writeText(el.innerText.replace(/^Copy\n/, ''));
+  }
+
+  async function validateSingle() {
+    const email = document.getElementById('emailInput').value.trim();
+    if (!email) return;
+    const skipSmtp = document.getElementById('skipSmtp').checked;
+    setLoading('single', true);
+    try {
+      const res = await fetch(API_BASE + '/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, skip_smtp: skipSmtp })
+      });
+      const data = await res.json();
+      renderSingleResult(data.data);
+    } catch (e) {
+      document.getElementById('singleResult').innerHTML =
+        `<p style="color:var(--red);font-family:var(--mono);font-size:13px;margin-top:12px">⚠ Could not reach API — is the server running?</p>`;
+    }
+    setLoading('single', false);
+  }
+
+  async function validateBatch() {
+    const raw = document.getElementById('batchInput').value.trim();
+    if (!raw) return;
+    const emails = raw.split('\n').map(e => e.trim()).filter(Boolean).slice(0, 10);
+    const skipSmtp = document.getElementById('skipSmtpBatch').checked;
+    setLoading('batch', true);
+    try {
+      const res = await fetch(API_BASE + '/validate/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emails, skip_smtp: skipSmtp })
+      });
+      const data = await res.json();
+      renderBatchResult(data.data);
+    } catch (e) {
+      document.getElementById('batchResult').innerHTML =
+        `<p style="color:var(--red);font-family:var(--mono);font-size:13px;margin-top:12px">⚠ Could not reach API — is the server running?</p>`;
+    }
+    setLoading('batch', false);
+  }
+
+  function setLoading(type, loading) {
+    const spinner = document.getElementById(type + 'Spinner');
+    const btn = document.getElementById(type === 'single' ? 'validateBtn' : 'batchBtn');
+    const text = document.getElementById(type === 'single' ? 'validateBtnText' : 'batchBtnText');
+    spinner.style.display = loading ? 'block' : 'none';
+    text.textContent = loading ? 'Checking...' : (type === 'single' ? 'Validate Email' : 'Validate All');
+    btn.disabled = loading;
+  }
+
+  function renderSingleResult(d) {
+    document.getElementById('singleResult').innerHTML = buildResultCard(d);
+    wireToggles();
+  }
+
+  function renderBatchResult(d) {
+    let html = `
+      <div class="batch-summary">
+        <div class="summary-stat"><div class="stat-num">${d.total}</div><div class="stat-label">Total</div></div>
+        <div class="summary-stat"><div class="stat-num valid-num">${d.valid}</div><div class="stat-label">Valid</div></div>
+        <div class="summary-stat"><div class="stat-num invalid-num">${d.invalid}</div><div class="stat-label">Invalid</div></div>
+      </div>`;
+    d.results.forEach(r => { html += buildResultCard(r); });
+    document.getElementById('batchResult').innerHTML = html;
+    wireToggles();
+  }
+
+  function buildResultCard(d) {
+    const statusClass = d.valid ? 'valid' : (d.checks?.smtp?.inconclusive ? 'inconclusive' : 'invalid');
+    const icon = d.valid ? '✓' : (d.checks?.smtp?.inconclusive ? '~' : '✕');
+    const scoreClass = d.score >= 80 ? 'high' : d.score >= 50 ? 'mid' : 'low';
+
+    const checks = d.checks || {};
+    const checkItems = [
+      { name: 'Syntax', status: checks.syntax?.passed ? 'pass' : 'fail' },
+      { name: 'DNS', status: checks.dns?.passed ? 'pass' : (checks.syntax?.passed ? 'fail' : 'skip') },
+      { name: 'MX Record', status: checks.mx?.passed ? 'pass' : (checks.dns?.passed ? 'fail' : 'skip') },
+      { name: 'SMTP', status: checks.smtp?.passed === true ? 'pass' : checks.smtp?.inconclusive ? 'warn' : checks.smtp?.passed === false ? 'fail' : 'skip' },
+    ];
+
+    let mxHtml = '';
+    if (checks.mx?.records?.length) {
+      mxHtml = `<div class="mx-records">
+        <div class="mx-label">MX Records</div>
+        ${checks.mx.records.map(r => `<div class="mx-record"><span>${r.exchange}</span><span class="mx-priority">Priority ${r.priority}</span></div>`).join('')}
+      </div>`;
+    }
+
+    let smtpHtml = '';
+    if (checks.smtp?.steps?.length) {
+      const uid = Math.random().toString(36).slice(2);
+      smtpHtml = `
+        <button class="smtp-toggle" onclick="toggleEl('smtp-${uid}')">▶ SMTP Transcript</button>
+        <div class="smtp-steps" id="smtp-${uid}">
+          ${checks.smtp.steps.map(s => `<div class="smtp-step ${s.startsWith('→') ? 'send' : 'recv'}">${escHtml(s)}</div>`).join('')}
+        </div>`;
+    }
+
+    const uid2 = Math.random().toString(36).slice(2);
+    return `
+      <div class="result-card" style="margin-bottom:14px">
+        <div class="result-header">
+          <div class="status-icon ${statusClass}">${icon}</div>
+          <div class="result-email">${escHtml(d.email || 'unknown')}</div>
+          <div class="score-badge ${scoreClass}">${d.score ?? 0}/100</div>
+        </div>
+        <div class="checks-grid">
+          ${checkItems.map(c => `
+            <div class="check-item">
+              <div class="check-dot ${c.status}"></div>
+              <div class="check-name">${c.name}</div>
+            </div>`).join('')}
+        </div>
+        <div class="result-details">
+          <div class="reason-text">${escHtml(d.reason || '')}</div>
+          ${mxHtml}
+          ${smtpHtml}
+          <button class="json-toggle" onclick="toggleEl('json-${uid2}')">{ } Raw JSON</button>
+          <div class="json-block" id="json-${uid2}">${escHtml(JSON.stringify(d, null, 2))}</div>
+        </div>
+      </div>`;
+  }
+
+  function wireToggles() {}
+
+  function toggleEl(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Enter key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('panel-single').classList.contains('active')) {
+      validateSingle();
+    }
+  });
+</script>
+</body>
+</html>

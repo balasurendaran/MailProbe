@@ -10,7 +10,16 @@
  *     — never actually sends a message
  */
 
-const dns = require("dns").promises;
+const dnsStandard = require("dns");
+const dns = dnsStandard.promises;
+
+// Set custom DNS servers if provided in .env (e.g. DNS_SERVERS=8.8.8.8,1.1.1.1)
+const customDns = process.env.DNS_SERVERS;
+if (customDns) {
+  const servers = customDns.split(",").map(s => s.trim());
+  console.log(`📡 Setting custom DNS servers: ${servers.join(", ")}`);
+  dnsStandard.setServers(servers);
+}
 const net = require("net");
 
 // ---------------------------------------------------------------------------
@@ -114,7 +123,25 @@ async function lookupMX(domain) {
       })),
       primary: sorted[0].exchange,
     };
-  } catch (err) {
+    } catch (err) {
+    if (err.code === "ECONNREFUSED") {
+      // Fallback: Try setting public DNS if system DNS is refused
+      try {
+        console.warn(`⚠️ DNS refused. Retrying with Google DNS (8.8.8.8)...`);
+        dnsStandard.setServers(["8.8.8.8", "1.1.1.1"]);
+        const records = await dns.resolveMx(domain);
+        if (records && records.length > 0) {
+          const sorted = records.sort((a, b) => a.priority - b.priority);
+          return {
+            valid: true,
+            records: sorted.map((r) => ({ exchange: r.exchange, priority: r.priority })),
+            primary: sorted[0].exchange,
+          };
+        }
+      } catch (fallbackErr) {
+        return { valid: false, reason: `DNS lookup failed (even with fallback): ${fallbackErr.message}` };
+      }
+    }
     if (err.code === "ENODATA" || err.code === "ENOTFOUND") {
       return { valid: false, reason: `No MX records found for "${domain}"` };
     }

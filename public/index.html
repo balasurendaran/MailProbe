@@ -764,7 +764,20 @@ curl -X POST http://localhost:<span class="num">3000</span>/api/validate/batch \
 
   function copyCode(lang) {
     const el = document.getElementById('code-' + lang);
-    navigator.clipboard.writeText(el.innerText.replace(/^Copy\n/, ''));
+    const btn = el.querySelector('.copy-btn');
+    const originalText = btn.innerText;
+    
+    navigator.clipboard.writeText(el.innerText.replace(/^Copy\n|Copied!\n/, ''));
+    
+    btn.innerText = 'Copied!';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green)';
+    
+    setTimeout(() => {
+      btn.innerText = originalText;
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
   }
 
   async function validateSingle() {
